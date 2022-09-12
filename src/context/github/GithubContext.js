@@ -2,12 +2,13 @@ import { createContext, useReducer } from "react";
 import githubReducer from "./GithubReducer";
 
 const GithubContext = createContext();
-const GITHUB_URL = process.env.REACT_APP_REACT_URL;
-const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
+// const GITHUB_URL = process.env.REACT_APP_REACT_URL;
+// const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN;
 
 export const GithubProvider = ({ children }) => {
   const initialState = {
     users: [],
+    user: {},
     loading: false,
   };
   const [state, dispatch] = useReducer(githubReducer, initialState);
@@ -17,9 +18,9 @@ export const GithubProvider = ({ children }) => {
     setLoading();
 
     const params = new URLSearchParams({ q: text });
-    const res = await fetch(`https://api.github.com/serach/users?${params}`, {
+    const res = await fetch(`https://api.github.com/search/users?${params}`, {
       headers: {
-        Authorization: `token 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`,
+        Authorization: `token ${process.env.REACT_APP_GITHUB_TOKEN}`,
       },
     });
 
@@ -31,12 +32,43 @@ export const GithubProvider = ({ children }) => {
     });
   };
 
+  //get Silgle user
+  const getUser = async (login) => {
+    setLoading();
+
+    const res = await fetch(`https://api.github.com/users/${login}`, {
+      headers: {
+        Authorization: `token ${process.env.REACT_APP_GITHUB_TOKEN}`,
+      },
+    });
+
+    if (res.status === 404) {
+      window.location = "/notfound";
+    } else {
+      const data = await res.json();
+
+      dispatch({
+        type: "GET_USER",
+        payload: data,
+      });
+    }
+  };
+  //ClearUser from state
+  const clearUsers = () => dispatch({ type: "CLEAR_USERS" });
+
   //set Loading
   const setLoading = () => dispatch({ type: "SET_LOADING" });
 
   return (
     <GithubContext.Provider
-      value={{ users: state.users, loading: state.loading, searchUsers }}
+      value={{
+        users: state.users,
+        loading: state.loading,
+        user: state.user,
+        searchUsers,
+        clearUsers,
+        getUser,
+      }}
     >
       {children}
     </GithubContext.Provider>
