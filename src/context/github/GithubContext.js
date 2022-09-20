@@ -10,6 +10,7 @@ export const GithubProvider = ({ children }) => {
     users: [],
     user: {},
     loading: false,
+    repos: [],
   };
   const [state, dispatch] = useReducer(githubReducer, initialState);
 
@@ -53,6 +54,28 @@ export const GithubProvider = ({ children }) => {
       });
     }
   };
+
+  //Get user repos
+
+  const getUserRepos = async (login) => {
+    setLoading();
+
+    const res = await fetch(
+      `${process.env.REACT_APP_REACT_URL}/users/${login}/repos`,
+      {
+        headers: {
+          Authorization: `token ${process.env.REACT_APP_GITHUB_TOKEN}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    dispatch({
+      type: "GET_REPOS",
+      payload: data,
+    });
+  };
   //ClearUser from state
   const clearUsers = () => dispatch({ type: "CLEAR_USERS" });
 
@@ -65,9 +88,11 @@ export const GithubProvider = ({ children }) => {
         users: state.users,
         loading: state.loading,
         user: state.user,
+        repos: state.repos,
         searchUsers,
         clearUsers,
         getUser,
+        getUserRepos,
       }}
     >
       {children}
